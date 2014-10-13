@@ -1,5 +1,8 @@
 
 function Transformer(hnRef, transformerRef) {
+    var now = new Date();
+    console.log("launched on " + now.toString());
+    console.log("UTC date: " + now.toUTCString());
     hnRef.child("topstories").on("child_changed", function(changedPostSnapshot) {
 
         var postId = changedPostSnapshot.val();
@@ -11,8 +14,6 @@ function Transformer(hnRef, transformerRef) {
             var datetime = new Date(post.time * 1000);
             var day = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][datetime.getDay()];
 
-            console.log("postID: " + postId + ", rank: " + rank + ", created on day: " + day + ", hour: " + datetime.getHours());
-
             var childIndex = "storiesByDayHour/" + day + "/" + datetime.getHours() + "/" + postId;
             var childNode = transformerRef.child(childIndex);
 
@@ -21,11 +22,11 @@ function Transformer(hnRef, transformerRef) {
                 var storedChild = childSnapshot.val();
                 var d = new Date();
                 post.minRank = rank;
-                post.timeOfLastRankClimb = d.getTime();
+                post.timeOfLastRankClimb = (d.getTime() / 1000);
 
                 if (storedChild !== null) {
                     if (rank < storedChild.minRank) {
-                        childNode.update({minRank: rank, timeOfLastRankClimb: d.getTime()});
+                        childNode.update({minRank: rank, timeOfLastRankClimb: (d.getTime() / 1000)});
                     }
                 } else {
                     childNode.set(post);
