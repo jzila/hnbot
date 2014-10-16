@@ -25,7 +25,7 @@ function Transformer(hnRef, transformerRef) {
                 post.timeOfLastRankClimb = (d.getTime() / 1000);
 
                 if (storedChild !== null) {
-                    if (rank < storedChild.minRank) {
+                    if (storedChild.minRank == null || rank < storedChild.minRank) {
                         childNode.update({minRank: rank, timeOfLastRankClimb: (d.getTime() / 1000)});
                     }
                 } else {
@@ -48,7 +48,7 @@ function Transformer(hnRef, transformerRef) {
                 }
                 if (item.type === "story") {
                     var d = new Date();
-                    item.minRank = Infinity;
+                    item.minRank = null;
                     item.timeOfLastRankClimb = (d.getTime() / 1000);
                     var datetime = new Date(item.time * 1000);
                     var day = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][datetime.getDay()];
