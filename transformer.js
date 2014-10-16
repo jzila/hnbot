@@ -37,6 +37,37 @@ function Transformer(hnRef, transformerRef) {
             });
         });
     });
+
+    var newItemHandler = function(itemId, timeout) {
+        setTimeout(function() {
+            hnRef.child("item/" + itemId).once("value", function(itemSnapshot) {
+                var item = itemSnapshot.val();
+                if (item === null) {
+                    console.log("null item " + itemId + ", trying again in " + (timeout * 2) + " ms");
+                    return newItemHandler(itemId, timeout * 2);
+                }
+                if (item.type === "story") {
+                    var d = new Date();
+                    item.minRank = Infinity;
+                    item.timeOfLastRankClimb = (d.getTime() / 1000);
+                    var datetime = new Date(item.time * 1000);
+                    var day = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][datetime.getDay()];
+                    var childNode = transformerRef.child("storiesByDayHour/" + day + "/" + datetime.getHours() + "/" + itemId);
+                    childNode.set(item);
+                    console.log("new story posted: " + item.title);
+                } else {
+                    console.log("new item " + itemId);
+                }
+            });
+        }, timeout);
+    };
+
+    hnRef.child("maxitem").on("value", function(changedItemSnapshot) {
+        var itemId = changedItemSnapshot.val();
+        var timeout = 1000;
+
+        newItemHandler(itemId, 1000);
+    });
 };
 
 module.exports = Transformer;
