@@ -1,8 +1,11 @@
 
 function Transformer(hnRef, transformerRef) {
     var now = new Date();
+    var days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
     console.log("launched on " + now.toString());
     console.log("UTC date: " + now.toUTCString());
+
     hnRef.child("topstories").on("child_changed", function(changedPostSnapshot) {
 
         var postId = changedPostSnapshot.val();
@@ -12,7 +15,7 @@ function Transformer(hnRef, transformerRef) {
 
             var post = postSnapshot.val();
             var datetime = new Date(post.time * 1000);
-            var day = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][datetime.getDay()];
+            var day = days[datetime.getDay()];
 
             var childIndex = "storiesByDayHour/" + day + "/" + datetime.getHours() + "/" + postId;
             var childNode = transformerRef.child(childIndex);
@@ -43,6 +46,7 @@ function Transformer(hnRef, transformerRef) {
             hnRef.child("item/" + itemId).once("value", function(itemSnapshot) {
                 var item = itemSnapshot.val();
                 if (item === null) {
+                    // Exponential backoff
                     console.log("null item " + itemId + ", trying again in " + (timeout * 2) + " ms");
                     return newItemHandler(itemId, timeout * 2);
                 }
@@ -51,7 +55,7 @@ function Transformer(hnRef, transformerRef) {
                     item.minRank = null;
                     item.timeOfLastRankClimb = (d.getTime() / 1000);
                     var datetime = new Date(item.time * 1000);
-                    var day = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][datetime.getDay()];
+                    var day = days[datetime.getDay()];
                     var childNode = transformerRef.child("storiesByDayHour/" + day + "/" + datetime.getHours() + "/" + itemId);
                     childNode.set(item);
                     console.log("new story posted: " + item.title);
@@ -67,6 +71,47 @@ function Transformer(hnRef, transformerRef) {
         var timeout = 1000;
 
         newItemHandler(itemId, 1000);
+    });
+
+    transformerRef.on("value", function(dataSnapshot) {
+        var allData = dataSnapshot.val();
+        var stories = allData[fullStoryIndex];
+        var topStories = allData[topStoryIndex];
+        var allData = dataSnapshot.val();
+        var stories = allData["storiesByDayHour"];
+        var topStories = allData["frontstoriesByDayHour"];
+
+        var percentageSeries = [];
+        var storySeries = [];
+        var topStorySeries = [];
+        var hourOrder = Array.apply(null, {length: 24}).map(Number.call, Number)
+                     
+        if (stories !== undefined) {
+            for (var i in days) {
+                var day = days[i];
+                for (var h in hourOrder) {
+                    var hour = hourOrder[h];
+                    var count = 0, topCount = 0, percentage = 0;
+                    if (topStories[day] !== undefined
+                            && topStories[day][hour] !== undefined) {
+                        count = Object.keys(stories[day][hour]).length;
+                        topCount = Object.keys(topStories[day][hour]).length;
+                        percentage = 100 * (topCount/count);
+                    }
+                    percentageSeries.push(percentage);
+                    storySeries.push(count);
+                    topStorySeries.push(topCount);
+                }
+            }
+        }
+        percentageSeries.push(percentageSeries.splice(0, 7));
+        storySeries.push(storySeries.splice(0, 7));
+        topStorySeries.push(topStorySeries.splice(0, 7));
+
+        var seriesRef = transformerRef.child("series");
+        seriesRef.child("percentages").set(percentageSeries);
+        seriesRef.child("stories").set(storySeries);
+        seriesRef.child("topstories").set(topStorySeries);
     });
 };
 
