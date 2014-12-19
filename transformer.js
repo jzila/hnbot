@@ -75,9 +75,6 @@ function Transformer(hnRef, transformerRef) {
 
     transformerRef.on("value", function(dataSnapshot) {
         var allData = dataSnapshot.val();
-        var stories = allData[fullStoryIndex];
-        var topStories = allData[topStoryIndex];
-        var allData = dataSnapshot.val();
         var stories = allData["storiesByDayHour"];
         var topStories = allData["frontstoriesByDayHour"];
 
@@ -112,6 +109,7 @@ function Transformer(hnRef, transformerRef) {
         seriesRef.child("percentages").set(percentageSeries);
         seriesRef.child("stories").set(storySeries);
         seriesRef.child("topstories").set(topStorySeries);
+        console.log("Series recalculated.");
     });
 };
 
