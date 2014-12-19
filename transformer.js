@@ -101,9 +101,13 @@ function Transformer(hnRef, transformerRef) {
                 }
             }
         }
-        percentageSeries.push(percentageSeries.splice(0, 7));
-        storySeries.push(storySeries.splice(0, 7));
-        topStorySeries.push(topStorySeries.splice(0, 7));
+        
+        var shiftedPercentages = percentageSeries.splice(0, 7);
+        var shiftedStories = storySeries.splice(0, 7);
+        var shiftedTopStories = topStorySeries.splice(0, 7);
+        Array.prototype.push.apply(percentageSeries, shiftedPercentages);
+        Array.prototype.push.apply(storySeries, shiftedStories);
+        Array.prototype.push.apply(topStorySeries, shiftedTopStories);
 
         var seriesRef = transformerRef.child("series");
         seriesRef.child("percentages").set(percentageSeries);
