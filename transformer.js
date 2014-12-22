@@ -102,9 +102,9 @@ function Transformer(hnRef, transformerRef) {
             }
         }
         
-        var shiftedPercentages = percentageSeries.splice(0, 7);
-        var shiftedStories = storySeries.splice(0, 7);
-        var shiftedTopStories = topStorySeries.splice(0, 7);
+        var shiftedPercentages = percentageSeries.splice(0, 8);
+        var shiftedStories = storySeries.splice(0, 8);
+        var shiftedTopStories = topStorySeries.splice(0, 8);
         Array.prototype.push.apply(percentageSeries, shiftedPercentages);
         Array.prototype.push.apply(storySeries, shiftedStories);
         Array.prototype.push.apply(topStorySeries, shiftedTopStories);
