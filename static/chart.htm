@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+        <script src="http://code.highcharts.com/highcharts.js"></script>
+        <script src="http://code.highcharts.com/modules/exporting.js"></script>
+        <script src="https://cdn.firebase.com/js/client/1.1.2/firebase.js"></script>
+        <script type="text/javascript">
+            $(document).ready(function () {
+                var dayArray = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+                $('#container').highcharts({
+                    plotOptions: {
+                        line: {
+                            marker: {
+                                enabled: false
+                            }
+                        },
+                        area: {
+                            marker: {
+                                enabled: false
+                            }
+                        }
+                    },
+                    title: {
+                        text: ''
+                    },
+
+                    subtitle: {
+                        text: ''
+                    },
+
+                    tooltip: {
+                        formatter: function() {
+                            var s = '<b>' + dayArray[Math.floor(this.x/24)] + ', hour ' + (this.x % 24) + '</b>';
+
+                            $.each(this.points, function () {
+                                s += '<br/>' + this.series.name + ': ' + this.y;
+                            });
+
+                            return s;
+                        },
+                        shared: true
+                    },
+
+                    xAxis: {
+                        tickInterval: 24,
+                        tickmarkPlacement: "between",
+                        labels: {
+                            x: 50,
+                            align: "left",
+                            formatter: function() {
+                                return dayArray[Math.floor(this.value/24)];
+                            }
+                        }
+                    },
+
+                    yAxis: [{ // Primary yAxis
+                        labels: {
+                            format: '{value}%',
+                            style: {
+                                color: Highcharts.getOptions().colors[1]
+                            }
+                        },
+                        title: {
+                            text: 'Probability',
+                            style: {
+                                color: Highcharts.getOptions().colors[1]
+                            }
+                        },
+                        floor: 0
+                    }, { // Secondary yAxis
+                        title: {
+                            text: 'Number of Stories',
+                            style: {
+                                color: Highcharts.getOptions().colors[0]
+                            }
+                        },
+                        labels: {
+                            format: '{value}',
+                            style: {
+                                color: Highcharts.getOptions().colors[0]
+                            }
+                        },
+                        opposite: true,
+                        floor: 0
+                    }],
+
+                    legend: {
+                        layout: 'vertical',
+                        align: 'left',
+                        x: 120,
+                        verticalAlign: 'top',
+                        y: 115,
+                        floating: true,
+                        backgroundColor: (Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF'
+                    },
+
+                    series: [
+                        {
+                            name: 'Probability of Front Page',
+                            type: 'line',
+                            yAxis: 0,
+                            tooltip: {
+                                valueSuffix: '%'
+                            }
+                        },
+                        {
+                            name: 'Number of Stories Overall',
+                            type: 'area',
+                            yAxis: 1
+                        },
+                        {
+                            name: 'Number of Top Stories',
+                            type: 'area',
+                            yAxis: 1
+                        }
+                    ]
+                });
+                var chart = Highcharts.charts[0];
+
+                var dataRef = new Firebase("https://brilliant-torch-9244.firebaseio.com/hnbot/series/");
+
+                dataRef.on("value", function(dataSnapshot) {
+                    var allData = dataSnapshot.val();
+                    var percentages = allData["percentages"];
+
+                    for (var i=0; i<7; i++) {
+                        var j=i*24;
+                        var total = percentages.slice(j,j+24).reduce(function(prev, cur) {
+                            return prev + cur;
+                        });
+                        console.log("Average for " + dayArray[i] + ": " + Math.round(total/2.4)/10 + "%");
+                    }
+                    for (var i=0; i<24; i++) {
+                        var total = [0,1,2,3,4,5,6].map(function(x) {
+                            return percentages[i + (x * 24)];
+                        }).reduce(function(prev, cur) {
+                            return prev + cur;
+                        });
+                        console.log("Average for hour " + i + ": " + Math.round(total/0.7)/10 + "%");
+                    }
+                    chart.series[0].setData(percentages);
+                    chart.series[1].setData(allData["stories"]);
+                    chart.series[2].setData(allData["topstories"]);
+                });
+
+            });
+        </script>
+    </head>
+    <body>
+        <div id="container" style="min-width: 310px; height: 40rem; margin: 0 auto"></div>
+    </body>
+</html>
