@@ -18,6 +18,14 @@
                         area: {
                             marker: {
                                 enabled: false
+                            },
+                            fillOpacity: .5
+                        },
+                        series: {
+                            states: {
+                                hover: {
+                                    lineWidthPlus: 0
+                                }
                             }
                         }
                     },
@@ -31,7 +39,10 @@
 
                     tooltip: {
                         formatter: function() {
-                            var s = '<b>' + dayArray[Math.floor(this.x/24)] + ', hour ' + (this.x % 24) + '</b>';
+                            var h = this.x % 12;
+                            h = (h==0 ? 12 : h);
+                            var m = ((this.x % 24) < 12 ? 'AM' : 'PM');
+                            var s = '<b>' + dayArray[Math.floor(this.x/24)] + ', ' + h + ':00 ' + m + ' PST</b>';
 
                             $.each(this.points, function () {
                                 s += '<br/>' + this.series.name + ': ' + this.y;
